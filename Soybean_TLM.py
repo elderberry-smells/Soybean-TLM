@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Created on Tue Jul 25 13:16:54 2017
-
 Version 1.0 of the Soybean Trait Linked Marker Tool
-
 @author: U590135
 """
 import csv
@@ -132,7 +130,6 @@ def getCall(dic, panel):
         elif allele[0] != allele[-1]: 
             seg += 1
              
-    print('panel:{}, trait:{}, seg:{}, no call:{}, no data:{}'.format(panel, trait, seg, dupe, no_data))                
     # using the counts of each type, return the call        
     if no_data > 0:
         return 'No Data'
@@ -149,7 +146,7 @@ def getCall(dic, panel):
 
 # ------------------------------------- finding the files in the folder ----------------------------
 '''reading the kraken csv file with pandas and converting the data set into individual dataframes'''
-#fhand = 'testfile.csv'
+
 path = r'C:\Users\U590135\.spyder-py3\projects\Soybean TLM'
 xlextension = 'xlsx'
 extension = 'csv'
@@ -169,7 +166,7 @@ for i in xl_files:
     get_name = i.find('.')
     csv_name = i[:get_name] + '.csv'
     df_temp.to_csv(csv_name, index=False, encoding='utf-8')
-    #os.remove(i)
+    os.remove(i)  # delete the original XLSX file so there are no duplicates
 
 #  get a list of all the csv files to run the script on
 csv_result = [i for i in glob.glob('*.{}'.format(extension))]
@@ -183,13 +180,12 @@ for i in csv_result:
     else:
         results_files.append(i)
             
-for fhand in results_files:
+for fhand in results_files:  # for each csv in the folder, run the analysis
     print('Analyzing ' + fhand + '...')
 
     with open(fhand, newline='') as kraken:
         reader = csv.DictReader(kraken)
         kraken_headers = reader.fieldnames
-        
         
         panel_summaries = ['Rps1 Zygosity Call', 'Rps3 Zygosity Call', 'Rhg1 Summary Call',
                            'SCC_3 Summary Call', 'SCC_11 Summary Call']  # add any new panels summary column name to this list
@@ -247,7 +243,7 @@ for fhand in results_files:
                 if row['Well'] in remove_controls:  # remove controls from report
                     continue
                 else:    
-                    row['Project'] = row['Project'].encode('utf-8')  # encode the pedigree column as utf-8
+                    row['Project'] = row['Project'].encode('utf-8')  # encode the Project column as utf-8
                     
 
                 # ------------------------  RPS1 Panel ----------------------------------
@@ -314,12 +310,12 @@ for fhand in results_files:
                 if exe_len > 1: # this has to match your example index len variable name above
                     ''' Example is present so convert panel into dictionary, pass into getCall to make a summary column'''
                     exe_index.sort()  # this has to match index variable name above
-                    dict_exe = {}  # addshort form of panel name after dict_
+                    dict_exe = {}  # add short-form of panel name after dict_
     
                     for i in exe_index:
                         dict_exe[kraken_headers[i]] = row[kraken_headers[i]]
                     
-                 # green text in next lline has to match exactly to the haplotype_panel key you add at top of script
+                 # green text in next line has to match exactly to the haplotype_panel key you add at top of script
                     exe_call = getCall(dict_exe, 'example: new panel name here') 
                     row['Example summary column name'] = exe_call
     
@@ -423,10 +419,11 @@ for fhand in results_files:
     results_writer.save()
     
     os.chdir(path) 
-    os.remove('temp_calls.csv')
-    os.remove(fhand)
+    os.remove('temp_calls.csv') # delete the temporary call file
+    os.remove(fhand)  # delete CSV version of kraken file
     
     print('Successfully completed {} ...\n'.format(fhand))
     
     time.sleep(2)
-        
+
+print('Completed all analysis')
