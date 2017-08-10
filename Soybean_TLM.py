@@ -63,6 +63,19 @@ haplotype_panel = {
                      ]
                 }
 
+# for future use - look to see if panel is an unknown and return unknown
+unknown_haplotypes =  {  # the following combinations will produce 'Unknown'
+               'rps1_haplotypes' :[{'placeholder':'allele'}],
+
+                'rps3a_haplotypes' : [{'placeholder':'allele'}],
+
+                'rhg1_haplotypes' : [{'placeholder':'allele'}],
+
+                'scc_3_haplotype' : [{'placeholder':'allele'}],
+                 
+                 'scc_11_haplotype' : [{'placeholder':'allele'}]
+                }
+                
 def indexAssays(panel, headers):
     """read through Kraken file and return an index of where each panel is located in file.
     If there are additions to any panel or a new panel, they must be added here to the 
@@ -89,40 +102,29 @@ def indexAssays(panel, headers):
 def getCall(dic, panel):
     '''determine the samples call for each panel in kraken file'''
     global haplotype_panel
-    dic_len = len(dic)
-    panel_len = len(haplotype_panel[panel])
-    
-        
+    global unknown_haplotypes
+     
     seg = 0
     dupe = 0
     no_data = 0
-    trait = 0
+    empty = 0
     
     #determine if the combination of assays is the Trait haplotype
-    if panel_len == 1:
-        for assay, allele in dic.items():
-            if (assay, allele) in haplotype_panel[panel][0].items():
-                trait += 1
-        
-    else:
-        if panel_len == 2:
-            for assay, allele in dic.items():
-                if (assay, allele) in haplotype_panel[panel][0].items():
-                    trait += 1
-            if trait != dic_len:
-                trait = 0
-            
-            for assay, allele in dic.items():
-                if (assay, allele) in haplotype_panel[panel][1].items():
-                    trait += 1
-                                
+    for hap in haplotype_panel[panel]:
+        if dic == hap:
+            return 'Trait'
+                 
+    # for future use: determine if the combination of assays is the unknown haplotype
+    for hap in unknown_haplotypes[panel]:
+        if dic == hap:
+            return 'Unknown'                         
                 
-            # determine if there is a seg/no call or no data in the panel
+    # determine if there is a seg/no call or no data in the panel
     for assay, allele in dic.items():
         if allele == 'No Data':
             no_data += 1
         elif allele == 'Empty':
-            no_data += 1
+            empty += 1
         elif allele == 'Unused':
             no_data += 1
         elif allele == 'Dupe':
@@ -131,14 +133,14 @@ def getCall(dic, panel):
             seg += 1
              
     # using the counts of each type, return the call        
-    if no_data > 0:
+    if empty > 0:
+        return ''
+    elif no_data > 0:
         return 'No Data'
     elif dupe > 0:
         return 'No Call'
     elif seg > 0:
         return 'Seg'
-    elif trait == dic_len:
-        return 'Trait'
     else:
         return 'Wildtype'
     
@@ -187,8 +189,8 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
         reader = csv.DictReader(kraken)
         kraken_headers = reader.fieldnames
         
-        panel_summaries = ['Rps1 Zygosity Call', 'Rps3 Zygosity Call', 'Rhg1 Summary Call',
-                           'SCC_3 Summary Call', 'SCC_11 Summary Call']  # add any new panels summary column name to this list
+        panel_summaries = ['Rps1 Zygosity Call', 'Rps3 Zygosity Call', 'Rhg1 Summary',
+                           'SCC_3 Summary', 'SCC_11 Summary']  # add any new panels summary column name to this list
     
         panel_list = []  # empty list where we can store which panels were run - for final merge sequence
         header_list = kraken_headers
@@ -280,7 +282,7 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
                         dict_rhg1[kraken_headers[i]] = row[kraken_headers[i]]
     
                     rhg1_call = getCall(dict_rhg1, 'rhg1_haplotypes')
-                    row['Rhg1 Summary Call'] = rhg1_call
+                    row['Rhg1 Summary'] = rhg1_call
     
                 # ---------------------------- SCC_3 Panel --------------------------
                 if scc3_len > 1:
@@ -292,7 +294,7 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
                         dict_scc3[kraken_headers[i]] = row[kraken_headers[i]]
     
                     scc3_call = getCall(dict_scc3, 'scc_3_haplotype')
-                    row['SCC_3 Summary Call'] = scc3_call
+                    row['SCC_3 Summary'] = scc3_call
     
                 # ------------------------------ SCC_11 Panel ------------------------
                 if scc11_len > 1:
@@ -304,7 +306,7 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
                         dict_scc11[kraken_headers[i]] = row[kraken_headers[i]]
     
                     scc11_call = getCall(dict_scc11, 'scc_11_haplotype')
-                    row['SCC_11 Summary Call'] = scc11_call
+                    row['SCC_11 Summary'] = scc11_call
     
                 # ------------------------------- Example for Panel Addition ------------------------------
                 if exe_len > 1: # this has to match your example index len variable name above
@@ -366,11 +368,11 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
         rhg1_headers = krak_info
         for i in rhg1_index:
             rhg1_headers.append(kraken_headers[i])
-        rhg1_headers.append('Rhg1 Summary Call')
+        rhg1_headers.append('Rhg1 Summary')
         rhg1_df = tlm_df[rhg1_headers]
         merge3 = pd.merge(left=merge2, right=rhg1_df, how='left')
     else:
-        tlm_df.drop(['Rhg1 Summary Call'], axis=1, inplace=True, errors='ignore')
+        tlm_df.drop(['Rhg1 Summary'], axis=1, inplace=True, errors='ignore')
         merge3 = merge2
     
     # merge that with SCC_3 dataframe if panel is in the kraken file
@@ -379,11 +381,11 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
         scc3_headers = krak_info
         for i in scc3_index:
             scc3_headers.append(kraken_headers[i])
-        scc3_headers.append('SCC_3 Summary Call')
+        scc3_headers.append('SCC_3 Summary')
         scc3_df = tlm_df[scc3_headers]
         merge4 = pd.merge(left=merge3, right=scc3_df, how='left')
     else:
-        tlm_df.drop(['SCC_3 Summary Call'], axis=1, inplace=True, errors='ignore')
+        tlm_df.drop(['SCC_3 Summary'], axis=1, inplace=True, errors='ignore')
         merge4 = merge3
     
     # merge that with SCC_11 spring dataframe if panel is in the kraken file
@@ -392,11 +394,11 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
         scc11_headers = krak_info
         for i in scc11_index:
             scc11_headers.append(kraken_headers[i])
-        scc11_headers.append('SCC_11 Summary Call')
+        scc11_headers.append('SCC_11 Summary')
         scc11_df = tlm_df[scc11_headers]
         merge5 = pd.merge(left=merge4, right=scc11_df, how='left')
     else:
-        tlm_df.drop(['SCC_11 Summary Call'], axis=1, inplace=True, errors='ignore')
+        tlm_df.drop(['SCC_11 Summary'], axis=1, inplace=True, errors='ignore')
         merge5 = merge4
         
         
@@ -411,7 +413,7 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
     merge_final = pd.merge(left=merge5, right=tlm_df, how='left')
     
     find_the_dot = fhand.find('.')
-    final_name = fhand[:find_the_dot] + '_Report.xlsx'
+    final_name = fhand[:find_the_dot] + '.xlsx'
     results_writer = ExcelWriter(final_name)
     
     os.chdir(completed_path)
@@ -427,3 +429,5 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
     time.sleep(2)
 
 print('Completed all analysis')
+
+time.sleep(1)
