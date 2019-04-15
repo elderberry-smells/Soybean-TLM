@@ -176,9 +176,10 @@ def indexAssays(panel, headers):
             continue
         
     return panel_index
-
-print(rsp1_index)
-```    
+```
+in:  rsp1_index
+out:  [6, 5]
+    
 
 ### removing the control wells and converting the 'Project' well to utf-8
 
@@ -257,9 +258,10 @@ example2_call = getCall(example2, 'rps1_haplotypes')
 example3_call = getCall(example3, 'rps1_haplotypes')
 example4_call = getCall(example4, 'rps1_haplotypes')
 example5_call = getCall(example5, 'rps1_haplotypes')
-
-print(example1_call, example2_call, example3_call, example4_call, example5_call)
 ```
+in: print(example1_call, example2_call, example3_call, example4_call, example5_call)
+out: ('Trait', 'Trait', 'Wildtype', 'Seg', 'No Call')
+
 
 The various panels will pass similar to the example above but use the data from the csv being read to populate the dictionary 
 being passed into the getCall function.  They are all referencing the specific panel key in the haplotype_panel to determine 
@@ -290,8 +292,8 @@ if rps3_len > 1:
 ```
 
 ## Merging the data together
-The final report will be made using pandas dataframes of each individual haplotype present.  This is to ensure the summary column 
-follows the panel of assays rather than at the end of the report.
+The final report will be made using pandas dataframes of each individual haplotype present.  This is to ensure the summary 
+column follows the panel of assays rather than at the end of the report.
 
 ```python
 tlm_df = pd.read_csv('temp_calls.csv', encoding='UTF-8')
@@ -330,7 +332,8 @@ df_initial = tlm_df[krak_info]  # sample and well info dataframe only (no molecu
         tlm_df.drop(['Rps3 Zygosity Call'], axis=1, inplace=True, errors='ignore')
         merge2 = merge1
 
-# repeat process for each panel in sequence until you have gone through all panels (adding 1 to merge number each time). 
+# repeat process for each panel in sequence until you have gone through all panels 
+(adding 1 to merge number each time). 
 ```
 
 ## final merge sequence and writing of new report 
