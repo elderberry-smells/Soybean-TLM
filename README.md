@@ -151,6 +151,7 @@ kraken_headers = ['Box', 'Well', 'Project', 'Sample Tube Number', 'Loc Seq#',
                   'DAS_Gm03_4458273_G_A Zygosity Call', 'DAS_Gm03_3838302_A_T Zygosity Call']
 panel_list =[]
 
+
 rps1_index = indexAssays('rps1_haplotypes', kraken_headers)
 rps1_len = int(len(rps1_index))
 if rps1_len > 1:
@@ -178,6 +179,7 @@ def indexAssays(panel, headers):
     return panel_index
 ```
 in:  rsp1_index
+
 out:  [6, 5]
     
 
@@ -260,6 +262,7 @@ example4_call = getCall(example4, 'rps1_haplotypes')
 example5_call = getCall(example5, 'rps1_haplotypes')
 ```
 in: print(example1_call, example2_call, example3_call, example4_call, example5_call)
+
 out: ('Trait', 'Trait', 'Wildtype', 'Seg', 'No Call')
 
 
@@ -333,7 +336,7 @@ df_initial = tlm_df[krak_info]  # sample and well info dataframe only (no molecu
         merge2 = merge1
 
 # repeat process for each panel in sequence until you have gone through all panels 
-(adding 1 to merge number each time). 
+# (adding 1 to merge number each time). 
 ```
 
 ## final merge sequence and writing of new report 
