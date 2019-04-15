@@ -13,7 +13,7 @@ that vary in length from a panel of 2 assays to a panel of 3.
 Some panels will only have 1 combination of alleles that will produce a trait, but others can have 2 combinations which are dictated in the 
 list of dictionaries below.
 
-'''python
+```python
 haplotype_panel = {
                'rps1_haplotypes' : [
                    # the following allele combinations will produce 'Trait'
@@ -63,7 +63,7 @@ unknown_haplotypes =  {  # the following combinations will produce 'Unknown'
                  'scc_11_haplotype' : [{'placeholder':'allele'}]
                 }
                 
-'''
+```
 
 ### Reading a Kraken File output
 
@@ -71,7 +71,7 @@ Kraken exports as an xlsx file, so we have the scipt read through a specific fol
 It converts the files to a csv using pandas, and then makes a list of csv files for running through the TLM tool analysis for 
 a report output.
 
-'''python
+```python
 import csv
 import pandas as pd
 from pandas import ExcelWriter
@@ -111,14 +111,14 @@ for i in csv_result:
         continue
     else:
         results_files.append(i)
-'''
+```
 
 ### Running the files through the TLM tool
 
 The file is read for the fieldnames as a header list and the possible panel summary headers are appended to that list for a 
 temporary file creation later.  Each file that is in the folder for analysis will go through the following steps in sequence.
 
-'''python
+```python
 for fhand in results_files:  # for each csv in the folder, run the analysis
     print('Analyzing ' + fhand + '...')
 
@@ -138,14 +138,14 @@ for fhand in results_files:  # for each csv in the folder, run the analysis
         with open('temp_calls.csv', 'w', newline='') as resultfile:
             writer = csv.DictWriter(resultfile, fieldnames=header_list)
             writer.writeheader()
-'''
+```
 
 ### Index the kraken headers for the assay panels
 
 Run the kraken_header list through the indexAssays function to find the location of **every TLM panel present** in the kraken file.  
 The function will return the column location (index) where the panel is present for all assays.
 
-'''python
+```python
 # example: try and index rps1_haplotype panel from header lists and return a list of column locations
 kraken_headers = ['Box', 'Well', 'Project', 'Sample Tube Number', 'Loc Seq#',
                   'DAS_Gm03_4458273_G_A Zygosity Call', 'DAS_Gm03_3838302_A_T Zygosity Call']
@@ -155,9 +155,9 @@ rps1_index = indexAssays('rps1_haplotypes', kraken_headers)
 rps1_len = int(len(rps1_index))
 if rps1_len > 1:
     panel_list.append('rps1_haplotypes')
-'''
+```
 
-'''python
+```python
 def indexAssays(panel, headers):
     
     global haplotype_panel
@@ -178,18 +178,18 @@ def indexAssays(panel, headers):
     return panel_index
 
 print(rsp1_index)
-'''    
+```    
 
 ### removing the control wells and converting the 'Project' well to utf-8
 
-'''python
+```python
 for row in reader:
                 remove_controls = ['A2', 'A02', 'A3', 'A03', 'A4', 'A04', 'A5', 'A05', 'A6', 'A06']
                 if row['Well'] in remove_controls:  # remove controls from report
                     continue
                 else:    
                     row['Project'] = row['Project'].encode('utf-8')  # encode the Project column as utf-8
-'''
+```
 
 ### The getCall function
 this function dictates the trait linked call of the haplotypes in the panels present in the panel.  There are a few call varieties 
@@ -198,7 +198,7 @@ that can be a result:  Trait, Wildtype, Seg, No call, No data, and blank.
 The data that gets passed into the getCall function is a dictionary that is created by isolating the panels into a dictionary (from 
 the previous indexing step).
 
-'''python
+```python
 def getCall(dic, panel):
     '''determine the samples call for each panel in kraken file'''
     global haplotype_panel
@@ -259,13 +259,13 @@ example4_call = getCall(example4, 'rps1_haplotypes')
 example5_call = getCall(example5, 'rps1_haplotypes')
 
 print(example1_call, example2_call, example3_call, example4_call, example5_call)
-'''
+```
 
 The various panels will pass similar to the example above but use the data from the csv being read to populate the dictionary 
 being passed into the getCall function.  They are all referencing the specific panel key in the haplotype_panel to determine 
 if the Trait haplotype is present.  If not, it determines if there is any no data/seg/dupe and anything left is a wildtype.
 
-'''python
+```python
 if rps1_len > 1:
     ''' RPS1 is present so make a dictionary out of the panel, pass into getCall to make a summary column'''
     rps1_index.sort()  # make sure column names are in order
@@ -287,13 +287,13 @@ if rps3_len > 1:
 
     rps3_call = getCall(dict_rps3, 'rps3a_haplotypes')
     row['Rps3 Zygosity Call'] = rps3_call
-'''
+```
 
 ## Merging the data together
 The final report will be made using pandas dataframes of each individual haplotype present.  This is to ensure the summary column 
 follows the panel of assays rather than at the end of the report.
 
-'''python
+```python
 tlm_df = pd.read_csv('temp_calls.csv', encoding='UTF-8')
 
 # get rid of the b' prefix in project column
@@ -331,13 +331,13 @@ df_initial = tlm_df[krak_info]  # sample and well info dataframe only (no molecu
         merge2 = merge1
 
 # repeat process for each panel in sequence until you have gone through all panels (adding 1 to merge number each time). 
-'''
+```
 
 ## final merge sequence and writing of new report 
 the merging is completed by merging the data that was not a part of the TLM panels (regular zygosity data).  Once that is in a dataframe, 
 write the file as xlsx to a "completed" folder, and remove any copies of the file from the initial folder.
 
-'''python
+```python
 # merge with final dataframe and write the file (gets any assays not in panel tacked on to end of kraken report)
     
     merge_final = pd.merge(left=merge5, right=tlm_df, how='left')
@@ -353,4 +353,4 @@ write the file as xlsx to a "completed" folder, and remove any copies of the fil
     os.chdir(path) 
     os.remove('temp_calls.csv') # delete the temporary call file
     os.remove(fhand)
-'''
+```
